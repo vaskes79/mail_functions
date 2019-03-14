@@ -16,9 +16,12 @@ exports.addClient = functions.https.onRequest((req, res) => {
     .push(client)
     .then(snapshot => {
       let key = snapshot.key;
+
       snapshot.update({
         id: key,
       });
+
+
       return res.redirect(303, req.get('Referer') + '#book');
     });
 });
@@ -29,4 +32,18 @@ exports.sendMail = functions.database
     const client = snapshot.val();
     console.log('id', context.params.pushId);
     console.log('client', client);
+
+    const payload = {
+      data: {
+        id: context.params.pushId,
+        value: client.name,
+      },
+    };
+
+    return admin
+      .messaging()
+      .sendToTopic('add_client_to_database', payload)
+      .catch(err => {
+        console.log('sendMail err notification', err);
+      });
   });
